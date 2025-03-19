@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if listing_type == "rent" %}
+        <title>Rent Listings</title>
+    {% elif listing_type == "sell" %}
+        <title>Buy Properties</title>
+    {% else %}
+        <title>My Listings</title>
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'css/property_details.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{% url 'home' username=username %}" class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="logo-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>HomeHunt</span>
+            </a>
+            <div class="nav-links">
+                <a href="{% url 'listings' listing_type='sell' username=username %}" class="nav-link">Buy</a>
+                <a href="{% url 'listings' listing_type='rent' username=username %}" class="nav-link">Rent</a>
+                <a href="{% url 'place_ad' username=username %}" class="nav-link">Place Ad</a>
+                <a href="{% url 'listings' listing_type='mylistings' username=username %}" class="nav-link">My Listings</a>
+            </div>
+        </div>
+        <div class="profile-section">
+            <a href='#' class="profile-icon"></a><span class="username">{{ username }}</span>
+            <a href="#" class="profile-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="profile-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="property-header">
+            <h1>Spacious {{ property.bedrooms }} Bedrooms {{ property.property_type|title }} available in {{ property.county|title }}</h1>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="image-gallery">
+            {% for image in property.images %}
+            <img src="{{ image }}" alt="Property image" class="gallery-image">
+            {% endfor %}
+        </div>
+
+        <div class="details-container">
+            <div class="property-info">
+                <dl class="details-grid">
+                    <div class="detail-item">
+                        <dt>Price:</dt>
+                        {% if property.listing_type == 'rent' %}
+                            <dd>€{{ property.price|floatformat:2 }} / month</dd>
+                        {% else %}
+                            <dd>€{{ property.price|floatformat:2 }}</dd>
+                        {% endif %}
+                    </div>
+                    <div class="detail-item">
+                        <dt>Property Type</dt>
+                        <dd>{{ property.property_type|title }}</dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>Bedrooms</dt>
+                        <dd>{{ property.bedrooms }}</dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>Bathrooms</dt>
+                        <dd>{{ property.bathrooms }}</dd>
+                    </div>
+                    <div class="detail-item full-width">
+                        <dt>Address</dt>
+                        <dd>{{ property.address|title }}</dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>County</dt>
+                        <dd>{{ property.county|title }}</dd>
+                    </div>
+                    <div class="detail-item">
+                        <dt>EIR Code</dt>
+                        <dd>{{ property.postal_code }}</dd>
+                    </div>
+                </dl>
+            </div>
+            
+            <!-- Map Container -->
+            <div class="map-container" id="map" data-eir-code="{{ property.postal_code }}">
+            </div>
+        </div>
+    </div>
+    
+    <div class="schedule-button-container">
+        <a href="{% url 'book-viewing' username=username property_id=property.id %}" class="schedule-viewing-btn" id="scheduleViewingBtn">
+            <i class="fas fa-calendar-alt"></i> Schedule Viewing
+        </a>
+    </div>
+<script src="{% static 'js/property_details.js' %}"></script>
+</body>
+</html>

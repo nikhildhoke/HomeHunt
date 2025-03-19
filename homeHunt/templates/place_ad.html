@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Ad</title>
+    <link rel="stylesheet" href="{% static 'css/place_ad.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{% url 'home' username=username %}" class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="logo-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>HomeHunt</span>
+            </a>
+            <div class="nav-links">
+                <a href="{% url 'listings' listing_type='sell' username=username %}" class="nav-link">Buy</a>
+                <a href="{% url 'listings' listing_type='rent' username=username %}" class="nav-link">Rent</a>
+                <a href="{% url 'place_ad' username=username %}" class="nav-link">Place Ad</a>
+                <a href="{% url 'listings' listing_type='mylistings' username=username %}" class="nav-link">My Listings</a>
+            </div>
+        </div>
+        <div class="profile-section">
+            <a href='#' class="profile-icon"></a><span class="username">{{ username }}</span></a>
+            <a href="#" class="profile-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="profile-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <div class="form-container">
+        <h2>Create New Property Listing</h2>
+        {% if error %}
+            <div class="error-message" id="temp-error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-success" id="temp-message">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+        
+        <form method="POST" enctype="multipart/form-data" id="property-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>Property Images</h3>
+                <div class="image-upload-grid">
+                    {% for i in "123" %}
+                    <div class="image-upload-box">
+                        <input type="file" name="images" accept="image/jpeg, image/png, image/jpg" required>
+                        <div class="preview-container">
+                            <span class="upload-text">Click to upload</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-group">
+                    <label>Owner Name:</label>
+                    <input type="text" name="owner_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Property Address:</label>
+                    <input type="text" name="address" required>
+                </div>
+
+                <div class="form-group">
+                    <label>County:</label>
+                    <input type="text" name="county" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>EIR Code:</label>
+                    <input type="text" name="postal_code" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Bedrooms:</label>
+                    <input name="bedrooms" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Bathrooms:</label>
+                    <input name="bathrooms" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Property Type:</label>
+                    <select name="property_type" required>
+                        <option value="duplex">Duplex</option>
+                        <option value="bunglow">Bunglow</option>
+                        <option value="apartment">Apartment</option>
+                        <option value="student_accommodation">Student Accommodation</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Listing Type:</label>
+                    <select name="listing_type" required>
+                        <option value="rent">For Rent</option>
+                        <option value="sell">For Sale</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="property_status" required>
+                        <option value="active">Looking for Buyer / Tenant</option>
+                        <option value="inactive">Sold / Occupied</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Price (€):</label>
+                    <input type="number" name="price" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Owner Email:</label>
+                    <input type="text" name="owner_email" required>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Owner Phone Number:</label>
+                    <input type="tel" name="owner_phone" placeholder="+353851234567" pattern="\+353\d{9}" 
+                    title="Irish format: +353 followed by 9 digits" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Publish Listing</button>
+            </div>
+        </form>
+    </div>
+
+<script src="{% static 'js/place_ad.js' %}"></script>
+
+</body>
+</html>

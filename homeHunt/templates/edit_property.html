@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Update</title>
+    <link rel="stylesheet" href="{% static 'css/edit_property.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{% url 'home' username=username %}" class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="logo-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>HomeHunt</span>
+            </a>
+            <div class="nav-links">
+                <a href="{% url 'listings' listing_type='sell' username=username %}" class="nav-link">Buy</a>
+                <a href="{% url 'listings' listing_type='rent' username=username %}" class="nav-link">Rent</a>
+                <a href="{% url 'place_ad' username=username %}" class="nav-link">Place Ad</a>
+                <a href="{% url 'listings' listing_type='mylistings' username=username %}" class="nav-link">My Listings</a>
+            </div>
+        </div>
+        <div class="profile-section">
+            <a href='#' class="profile-icon"></a><span class="username">{{ username }}</span>
+            <a href="#" class="profile-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="profile-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <div class="form-container">
+        <h1>Update Property Details</h1>
+        {% if error %}
+            <div class="error-message" id="temp-error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-success" id="temp-message">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+        <form method="POST" enctype="multipart/form-data" id="property-form">
+            {% csrf_token %}
+            <div class="form-section">
+                <div class="form-group">
+                    <label>Owner Name:</label>
+                    <input type="text" name="owner_name" value="{{ property.owner_name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Property Address:</label>
+                    <input type="text" name="address" value="{{ property.address }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>County:</label>
+                    <input type="text" name="county" value="{{ property.county }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>EIR Code:</label>
+                    <input type="text" name="postal_code" value="{{ property.postal_code }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Bedrooms:</label>
+                    <input name="bedrooms" min="1" value="{{ property.bedrooms }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Bathrooms:</label>
+                    <input name="bathrooms" min="1" value="{{ property.bathrooms }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Property Type:</label>
+                    <select name="property_type" value="{{ property.property_type }}" required>
+                        {% if property.property_type == 'duplex' %}
+                            <option value="duplex" selected>Duplex</option>
+                            <option value="bunglow">Bunglow</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="student_accommodation">Student Accommodation</option>
+                        {% elif property.property_type == 'bunglow' %}
+                            <option value="duplex">Duplex</option>
+                            <option value="bunglow" selected>Bunglow</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="student_accommodation">Student Accommodation</option>
+                        {% elif property.property_type == 'apartment' %}
+                            <option value="duplex">Duplex</option>
+                            <option value="bunglow">Bunglow</option>
+                            <option value="apartment" selected>Apartment</option>
+                            <option value="student_accommodation">Student Accommodation</option>
+                        {% else %}
+                            <option value="duplex">Duplex</option>
+                            <option value="bunglow">Bunglow</option>
+                            <option value="apartment">Apartment</option>
+                            <option value="student_accommodation" selected>Student Accommodation</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Listing Type:</label>
+                    <select name="listing_type" required>
+                        {% if property.listing_type == 'rent' %}
+                            <option value="rent" selected>For Rent</option>
+                            <option value="sell">For Sale</option>
+                        {% else %}
+                            <option value="rent">For Rent</option>
+                            <option value="sell" selected>For Sale</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="property_status" required>
+                        {% if property.status == 'active' %}
+                            <option value="active" selected>Looking for Buyer / Tenant</option>
+                            <option value="inactive">Sold / Occupied</option>
+                        {% else %}
+                            <option value="active">Looking for Buyer / Tenant</option>
+                            <option value="inactive" selected>Sold / Occupied</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Price (€):</label>
+                    <input type="number" name="price" value="{{ property.price }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Owner Email:</label>
+                    <input type="text" name="owner_email" value="{{ property.owner_email }}" required>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Owner Phone Number:</label>
+                    <input type="tel" name="owner_phone" placeholder="+353851234567" pattern="\+353\d{9}" 
+                    title="Irish format: +353 followed by 9 digits" value="{{ property.owner_phone }}" required>
+                </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn btn-update">Update Property</button>
+                <button type="button" class="btn btn-delete" onclick="showDeleteConfirmation(event)">Delete Property</button>
+            </div>
+        </form>
+        
+    <div class="confirmation-modal" id="confirmationModal">
+        <div class="modal-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to delete this property?</p>
+            <div class="modal-buttons">
+                <a href="{% url 'delete_property' username=username property_id=property.id %}" 
+                   class="btn btn-delete">Yes, Delete</a>
+                <button type="button" class="btn btn-update" onclick="cancelDelete()">Cancel</button>
+            </div>
+        </div>
+    </div>
+<script src="{% static 'js/edit_property.js' %}"></script>
+</body>
+</html>

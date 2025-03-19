@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if listing_type == "rent" %}
+        <title>Rent Listings</title>
+    {% elif listing_type == "sell" %}
+        <title>Buy Properties</title>
+    {% else %}
+        <title>My Listings</title>
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'css/property_listings.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="{% url 'home' username=username %}" class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="logo-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span>HomeHunt</span>
+            </a>
+            <div class="nav-links">
+                <a href="{% url 'listings' listing_type='sell' username=username %}" class="nav-link">Buy</a>
+                <a href="{% url 'listings' listing_type='rent' username=username %}" class="nav-link">Rent</a>
+                <a href="{% url 'place_ad' username=username %}" class="nav-link">Place Ad</a>
+                <a href="{% url 'listings' listing_type='mylistings' username=username %}" class="nav-link">My Listings</a>
+            </div>
+        </div>
+        <div class="profile-section">
+            <a href='#' class="profile-icon"></a><span class="username">{{ username }}</span>
+            <a href="#" class="profile-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="profile-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    {% if listing_type == "rent" or listing_type == "sell" %}
+        <div class="filters">
+            <input type="text" id="address-filter" placeholder="Search by address">
+            <select id="price-filter">
+                <option value="">All Prices</option>
+                <option value="1000">Under €1k</option>
+                <option value="2000">Under €2k</option>
+                <option value="5000">Under €5k</option>
+            </select>
+            <select id="bedrooms-filter">
+                <option value="">All Bedrooms</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+            </select>
+        </div>
+    {% endif %}
+
+    <div class="property-container">
+        {% if listing_type == "rent" %}
+            <h2 style="text-align:center;">Properties Available for Rent</h2>
+        {% elif listing_type == "sell" %}
+            <h2 style="text-align:center;">Properties Available for Sale</h2>
+        {% else %}
+            <h2 style="text-align:center;">My Listed Properties</h2>
+        {% endif %}
+        
+        {% if error %}
+            <div class="error-message" id="temp-error-message">
+                {{ error }}
+            </div>
+        {% endif %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-success" id="temp-message">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="listings-container">
+            <div class="property-grid">
+                {% for property in properties %}
+                    <div class="property-item">
+                        <div class="image-carousel">
+                            {% for image_url in property.images|slice:":5" %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image_url }}" alt="Property image">
+                            </div>
+                            {% endfor %}
+                            <button class="carousel-prev">&lt;</button>
+                            <button class="carousel-next">&gt;</button>
+                        </div>
+                        {% if listing_type == 'mylistings' %}
+                            <a href="{% url 'edit_property_details' username=username property_id=property.id %}" class="property-card">
+                        {% else %}
+                            <a href="{% url 'property-details' action_type='view' username=username property_id=property.id %}" class="property-card">
+                        {% endif %}
+                            <div class="property-info">
+                                <h3>{{ property.address|title }}</h3>
+                                <h4>{{ property.county|title }}</h4>
+                                <h5 hidden>{{ property.address }} {{ property.county }} {{ property.postal_code }}</h5>
+                                {% if property.listing_type == 'rent' %}
+                                    <span class="price">€{{ property.price|floatformat:2 }}</span><span> per month</span>
+                                {% else %}
+                                    <span class="price">€{{ property.price|floatformat:2 }}</span>
+                                {% endif %}
+                                <div class="details">
+                                    <span>{{ property.bedrooms }} Beds</span>
+                                    <span>{{ property.bathrooms }} Baths</span>
+                                    <span>{{ property.property_type|title }}</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% empty %}
+                <div class="no-results">No properties available at the moment.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+<script src="{% static 'js/property_listings.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeHunt - Sign In</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <div class="form-container">
+        <h2 class="form-title">Confirm Your Email</h2>
+        
+        {% if errors.general %}
+        <div class="alert alert-danger">
+            {{ errors.general }}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type='hidden' name="username" value="{{ username }}">
+            
+            <div class="form-group">
+                <label for="code">Verification Code</label>
+                <i class="fas fa-shield-alt"></i>
+                <input type="text" id="code" name="code" 
+                       placeholder="Enter 6-digit code" required>
+            </div>
+
+            <button type="submit">Confirm Account →</button>
+
+            <div class="resend-link">
+                Didn't receive code? <a href="{% url 'resend_code' %}?username={{ username }}">Resend Code</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
