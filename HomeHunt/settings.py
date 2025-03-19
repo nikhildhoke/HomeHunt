@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+import os
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -25,18 +25,20 @@ SECRET_KEY = 'django-insecure-s(jv6yze-83%)m-_9simr-#!_5n3ai%-@hs655pko-4)h7ayj_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'homeHunt',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_dump_die',
 ]
 
 MIDDLEWARE = [
@@ -47,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_dump_die.middleware.DumpAndDieMiddleware',
 ]
 
 ROOT_URLCONF = 'HomeHunt.urls'
@@ -117,7 +120,21 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'homeHunt/static/'),
+]
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CSRF_TRUSTED_ORIGINS = ['https://1230ba29d7f643788e52886248877182.vfs.cloud9.us-east-1.amazonaws.com']
+
+AWS_REGION          = 'us-east-1'
+AWS_USER_POOL_NAME  = 'cpp-cognito-user-pool'
+S3_BUCKET_NAME      = 'cpp-home-hunt-properties'
+DYNAMO_TABLE_NAME_1 = 'cpp-properties'
+DYNAMO_TABLE_NAME_2 = 'cpp-bookings'
+LAMBDA_FUNCTION_NAME = "SendBookingNotifications"
+LAMBDA_ROLE_ARN = "arn:aws:iam::537364842544:role/LabRole"

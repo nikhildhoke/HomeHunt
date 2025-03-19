@@ -10,11 +10,11 @@ class DynamoHelper:
     def _refresh_dynamodb(self):
         self.dynamodb = boto3.resource(
             'dynamodb',
-            region_name='us-east-1'
+            region_name = settings.AWS_REGION
         )
         self.tables = {
-            'properties': self.dynamodb.Table('cpp-properties'),
-            'bookings': self.dynamodb.Table('cpp-bookings')
+            'properties': self.dynamodb.Table( settings.DYNAMO_TABLE_NAME_1 ),
+            'bookings': self.dynamodb.Table( settings.DYNAMO_TABLE_NAME_2 )
         }
         
 

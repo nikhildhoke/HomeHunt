@@ -1,6 +1,7 @@
 import re
 import uuid
 import datetime
+import json
 from decimal import Decimal
 from django.conf import settings
 from django.contrib import messages
@@ -102,21 +103,6 @@ def confirm_signup( request, username ):
             context['errors']['general'] = str( e )
 
     return render( request, 'confirmation.html', context )
-
-
-def resend_code(request):
-    if request.method == 'POST':
-        cognito = SimpleCognito()
-        try:
-            response = cognito.client.resend_confirmation_code(
-                ClientId=settings.AWS_COGNITO['APP_CLIENT_ID'],
-                SecretHash=cognito._secret_hash(request.POST.get('username')),
-                Username=request.POST.get('username')
-            )
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
-    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @csrf_protect
 def login_view( request ):
@@ -325,9 +311,10 @@ def book_viewing(request, username, property_id):
                     'booking_date': request.POST.get('booking_date'),
                     'time_slot': request.POST.get('selected_time')
                 }
-    
+
                 response = lambda_helper.invoke_notification( lambda_payload )
-                if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+                response = json.dumps( response )
+                if response['statusCode'] == 200:
                     messages.success(request, "Booking request submitted! Check your email for subscription confirmation.")
                     if dynamo_helper.save_booking_details( booking_details ):
                         messages.success(request, "Booking confirmed successfully!! 🎉🎉")
@@ -339,7 +326,8 @@ def book_viewing(request, username, property_id):
                     raise Exception("Failed to save property to database")
     
             except Exception as e:
-                return render(request, 'book_viewing.html', {'error': str(e)})
+                context['error'] = f"Database error: {str(e)}"
+                return render(request, 'book_viewing.html', context)
 
         except Exception as e:
             context['error'] = f"Database error: {str(e)}"
