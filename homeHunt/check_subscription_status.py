@@ -1,32 +1,41 @@
 import json
-from sns_helper import SNSHelper
-from sqs_helper import SQSHelper
-
-class CheckSubscription:
-    def __init__(self):
-        self.sns_helper = SNSHelper()
-        self.sqs_helper = SQSHelper()
-
-    def process_pending_bookings(self):
-        messages = self.sqs_helper.receive_messages()
-        for message in messages:
-            booking_data = json.loads(message["Body"])
-            email_owner = booking_data["email_owner"]
-            email_viewer = booking_data["email_viewer"]
-
-            owner_subscribed = self.sns_helper.check_subscription_status(email_owner)
-            viewer_subscribed = self.sns_helper.check_subscription_status(email_viewer)
-
-            if owner_subscribed and viewer_subscribed:
-                print(f"Both {email_owner} and {email_viewer} are now subscribed. Sending booking confirmation.")
-
-                self.sns_helper.send_booking_confirmation(email_owner, email_viewer)
-                self.sqs_helper.delete_message(message["ReceiptHandle"])
-                print(f"Processed and removed booking from SQS for {email_owner} and {email_viewer}")
-            else:
-                print(f"Subscription still pending for {email_owner} or {email_viewer}. Retrying later.")
+import boto3
+import time
+from sns_sqs_helper import BookingNotification
 
 def lambda_handler(event, context):
-    checker = CheckSubscription()
-    checker.process_pending_bookings()
-    return {"status": "Checked pending bookings"}
+    book_notification = BookingNotification()
+    
+    # Instantiate the Booking Notification class
+    book_notification = BookingNotification()
+    
+    for record in event['Records']:
+        message_body    = json.loads(record['body'])
+        owner_email     = message_body['owner_email']
+        viewer_email    = message_body['viewer_email']
+        booking_details = message_body['booking_details']
+    
+        # Check subscriptions for owner and viewer
+        owner_subscribed    = book_notification.check_subscription(owner_email)
+        viewer_subscribed   = book_notification.check_subscription(viewer_email)
+        
+        if owner_subscribed and viewer_subscribed:
+            # Both are subscribed, send booking confirmation
+            sns_message = f"Booking confirmed for {booking_details['date']} at {booking_details['time_slot']} at {booking_details['property_address']}."
+            book_notification.publish( sns_message )
+        
+        else:
+            book_notification.subscribe_email( owner_email )
+            book_notification.subscribe_email( viewer_email )
+            
+            time.sleep(120)  # Wait for 2 minutes
+            
+            # Check again after 2 minutes
+            owner_subscribed    = book_notification.check_subscription( owner_email )
+            viewer_subscribed   = book_notification.check_subscription( viewer_email )
+            
+            if owner_subscribed and viewer_subscribed:
+                # Both are subscribed, send booking confirmation
+                sns_message = f"Booking confirmed for {booking_details['date']} at {booking_details['time_slot']} at {booking_details['property_address']}."
+                book_notification.publish( sns_message )
+                book_notification.delete_queue_message( record['receiptHandle'] )
