@@ -308,7 +308,7 @@ def book_viewing(request, username, property_id):
                     'viewer_name': request.POST.get('viewer_name'),
                     'viewer_email': request.POST.get('viewer_email'),
                     'viewer_phone': request.POST.get('viewer_phone'),
-                    'booking_date': request.POST.get('booking_date'),
+                    'date': request.POST.get('booking_date'),
                     'time_slot': request.POST.get('selected_time')
                 }
 

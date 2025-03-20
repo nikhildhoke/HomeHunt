@@ -1,64 +1,44 @@
 import json
 import boto3
-from botocore.exceptions import ClientError
-from sns_helper import SNSHelper
-from sqs_helper import SQSHelper
-
-AWS_REGION = "us-east-1"
-SQS_QUEUE_NAME = "PendingBookingQueue"
+from sns_sqs_helper import BookingNotification
 
 def lambda_handler(event, context):
-    """Lambda function to check SNS topic, handle subscriptions, and store messages in SQS."""
-    try:
-        # Parse input payload
-        data = json.loads(event["body"]) if "body" in event else event
-        owner_email = data.get("owner_email")
-        viewer_email = data.get("viewer_email")
+    # Parse the incoming JSON payload
+    # data = json.loads(event['body'])
+    data = event
+    owner_email = data['owner_email']
+    viewer_email = data['viewer_email']
+    
+    # Instantiate the Booking Notification class
+    book_notification = BookingNotification()
 
-        # Validate input
-        if not owner_email or not viewer_email:
-            return {"statusCode": 400, "body": json.dumps({"error": "Missing email addresses"})}
+    # Check subscriptions for owner and viewer
+    owner_subscribed    = book_notification.check_subscription(owner_email)
+    viewer_subscribed   = book_notification.check_subscription(viewer_email)
 
-        sns_helper = SNSHelper()
-        sqs_helper = SQSHelper()
+    # Handle notification logic
+    if owner_subscribed and viewer_subscribed:
+        # Both are subscribed, send booking confirmation
+        sns_message = f"Booking confirmed for {data['date']} at {data['time_slot']} at {data['property_address']}."
+        book_notification.publish( sns_message )
+    else:
+        # At least one party is not subscribed, enqueue the information
+        message_body = {
+            'owner_email': owner_email,
+            'viewer_email': viewer_email,
+            'booking_details': data,
+            'message': 'Please subscribe to receive booking confirmation.'
+        }
+        
+        book_notification.sqs_client.send_message(
+            QueueUrl    = book_notification.queue_url, 
+            MessageBody = json.dumps( message_body ) 
+        )
 
-        # Ensure SNS topic exists
-        topic_arn = sns_helper.get_or_create_sns_topic()
+        book_notification.subscribe_email( owner_email )
+        book_notification.subscribe_email( viewer_email )
 
-        # Check subscription status
-        owner_subscribed = sns_helper.check_subscription_status(owner_email)
-        viewer_subscribed = sns_helper.check_subscription_status(viewer_email)
-
-        if not owner_subscribed or not viewer_subscribed:
-            print(f"Subscription pending. Sending subscription email to {owner_email} and {viewer_email}")
-
-            # Subscribe both emails to SNS topic
-            if not owner_subscribed:
-                sns_helper.subscribe_email(owner_email)
-            if not viewer_subscribed:
-                sns_helper.subscribe_email(viewer_email)
-
-            # Ensure SQS queue exists
-            queue_url = sqs_helper.get_or_create_sqs_queue()
-
-            # Store booking confirmation message in SQS
-            sqs_message = {
-                "owner_email": owner_email,
-                "viewer_email": viewer_email,
-                "property_id": data.get("property_id"),
-                "property_address": data.get("property_address"),
-                "booking_date": data.get("booking_date"),
-                "time_slot": data.get("time_slot")
-            }
-            sqs_helper.send_message(sqs_message)
-
-            return {"statusCode": 202, "body": json.dumps({"message": "Subscription pending, message stored in SQS."})}
-
-        # If both are subscribed, send booking confirmation email
-        sns_helper.send_booking_confirmation(owner_email, viewer_email, data)
-
-        return {"statusCode": 200, "body": json.dumps({"message": "Booking confirmed, email sent."})}
-
-    except Exception as e:
-        print(f"Error in lambda_function: {str(e)}")
-        return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Processing completed.')
+    }

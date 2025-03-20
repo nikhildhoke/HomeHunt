@@ -136,5 +136,5 @@ AWS_USER_POOL_NAME  = 'cpp-cognito-user-pool'
 S3_BUCKET_NAME      = 'cpp-home-hunt-properties'
 DYNAMO_TABLE_NAME_1 = 'cpp-properties'
 DYNAMO_TABLE_NAME_2 = 'cpp-bookings'
-LAMBDA_FUNCTION_NAME = "SendBookingNotifications"
+LAMBDA_FUNCTION_NAME = "BookingNotifications"
 LAMBDA_ROLE_ARN = "arn:aws:iam::537364842544:role/LabRole"
