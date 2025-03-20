@@ -308,12 +308,12 @@ def book_viewing(request, username, property_id):
                     'viewer_name': request.POST.get('viewer_name'),
                     'viewer_email': request.POST.get('viewer_email'),
                     'viewer_phone': request.POST.get('viewer_phone'),
-                    'date': request.POST.get('booking_date'),
+                    'booking_date': request.POST.get('booking_date'),
                     'time_slot': request.POST.get('selected_time')
                 }
 
                 response = lambda_helper.invoke_notification( lambda_payload )
-                response = json.dumps( response )
+                response = json.loads( response )
                 if response['statusCode'] == 200:
                     messages.success(request, "Booking request submitted! Check your email for subscription confirmation.")
                     if dynamo_helper.save_booking_details( booking_details ):

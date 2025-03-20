@@ -4,7 +4,6 @@ import time
 from sns_sqs_helper import BookingNotification
 
 def lambda_handler(event, context):
-    book_notification = BookingNotification()
     
     # Instantiate the Booking Notification class
     book_notification = BookingNotification()
@@ -14,6 +13,20 @@ def lambda_handler(event, context):
         owner_email     = message_body['owner_email']
         viewer_email    = message_body['viewer_email']
         booking_details = message_body['booking_details']
+
+        sns_message = f"""Your Booking is Confirmed!\n\n
+                    Property Address: {booking_details['property_address']}\n
+                    Date: {booking_details['booking_date']}\n
+                    Time Slot: {booking_details['time_slot']}\n\n
+                    Owner Details:\n
+                        - Name: {booking_details['owner_name']}\n
+                        - Email: {booking_details['owner_email']}\n
+                        - Phone: {booking_details['owner_phone']}\n
+                    f"Viewer Details:\n
+                        - Name: {booking_details['viewer_name']}\n
+                        - Email: {booking_details['viewer_email']}\n
+                        - Phone: {booking_details['viewer_phone']}\n"""
+
     
         # Check subscriptions for owner and viewer
         owner_subscribed    = book_notification.check_subscription(owner_email)
@@ -21,7 +34,6 @@ def lambda_handler(event, context):
         
         if owner_subscribed and viewer_subscribed:
             # Both are subscribed, send booking confirmation
-            sns_message = f"Booking confirmed for {booking_details['date']} at {booking_details['time_slot']} at {booking_details['property_address']}."
             book_notification.publish( sns_message )
         
         else:
@@ -36,6 +48,5 @@ def lambda_handler(event, context):
             
             if owner_subscribed and viewer_subscribed:
                 # Both are subscribed, send booking confirmation
-                sns_message = f"Booking confirmed for {booking_details['date']} at {booking_details['time_slot']} at {booking_details['property_address']}."
                 book_notification.publish( sns_message )
                 book_notification.delete_queue_message( record['receiptHandle'] )

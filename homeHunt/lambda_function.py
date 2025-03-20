@@ -3,12 +3,24 @@ import boto3
 from sns_sqs_helper import BookingNotification
 
 def lambda_handler(event, context):
-    # Parse the incoming JSON payload
-    # data = json.loads(event['body'])
+    
     data = event
     owner_email = data['owner_email']
     viewer_email = data['viewer_email']
-    
+
+    sns_message = f"""Your Booking is Confirmed!\n\n
+                Property Address: {data['property_address']}\n
+                Date: {data['booking_date']}\n
+                Time Slot: {data['time_slot']}\n\n
+                Owner Details:\n
+                    - Name: {data['owner_name']}\n
+                    - Email: {data['owner_email']}\n
+                    - Phone: {data['owner_phone']}\n
+                f"Viewer Details:\n
+                    - Name: {data['viewer_name']}\n
+                    - Email: {data['viewer_email']}\n
+                    - Phone: {data['viewer_phone']}\n"""
+
     # Instantiate the Booking Notification class
     book_notification = BookingNotification()
 
@@ -19,7 +31,6 @@ def lambda_handler(event, context):
     # Handle notification logic
     if owner_subscribed and viewer_subscribed:
         # Both are subscribed, send booking confirmation
-        sns_message = f"Booking confirmed for {data['date']} at {data['time_slot']} at {data['property_address']}."
         book_notification.publish( sns_message )
     else:
         # At least one party is not subscribed, enqueue the information
