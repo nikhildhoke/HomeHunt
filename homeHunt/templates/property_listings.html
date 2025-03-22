@@ -9,8 +9,10 @@
         <title>Rent Listings</title>
     {% elif listing_type == "sell" %}
         <title>Buy Properties</title>
-    {% else %}
+    {% elif listing_type == "mylistings" %}
         <title>My Listings</title>
+    {% else %}
+        <title>My Bookings</title>
     {% endif %}
     <link rel="stylesheet" href="{% static 'css/property_listings.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -30,6 +32,7 @@
                 <a href="{% url 'listings' listing_type='rent' username=username %}" class="nav-link">Rent</a>
                 <a href="{% url 'place_ad' username=username %}" class="nav-link">Place Ad</a>
                 <a href="{% url 'listings' listing_type='mylistings' username=username %}" class="nav-link">My Listings</a>
+                <a href="{% url 'listings' listing_type='mybookings' username=username %}" class="nav-link">My Bookings</a>
             </div>
         </div>
         <div class="profile-section">
@@ -97,6 +100,8 @@
                         </div>
                         {% if listing_type == 'mylistings' %}
                             <a href="{% url 'edit_property_details' username=username property_id=property.id %}" class="property-card">
+                        {% elif listing_type == 'mybookings' %}
+                            <a href="{% url 'property-details' action_type='booking' username=username property_id=property.id %}" class="property-card">
                         {% else %}
                             <a href="{% url 'property-details' action_type='view' username=username property_id=property.id %}" class="property-card">
                         {% endif %}

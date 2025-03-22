@@ -8,18 +8,18 @@ def lambda_handler(event, context):
     owner_email = data['owner_email']
     viewer_email = data['viewer_email']
 
-    sns_message = f"""Your Booking is Confirmed!\n\n
-                Property Address: {data['property_address']}\n
-                Date: {data['booking_date']}\n
-                Time Slot: {data['time_slot']}\n\n
-                Owner Details:\n
-                    - Name: {data['owner_name']}\n
-                    - Email: {data['owner_email']}\n
-                    - Phone: {data['owner_phone']}\n
-                f"Viewer Details:\n
-                    - Name: {data['viewer_name']}\n
-                    - Email: {data['viewer_email']}\n
-                    - Phone: {data['viewer_phone']}\n"""
+    sns_message = f"""Your Booking is Confirmed!
+    Property Address: {data['property_address']}
+    Date: {data['booking_date']}
+    Time Slot: {data['time_slot']}
+    Owner Details:
+        - Name: {data['owner_name']}
+        - Email: {data['owner_email']}
+        - Phone: {data['owner_phone']}
+    Viewer Details:
+        - Name: {data['viewer_name']}
+        - Email: {data['viewer_email']}
+        - Phone: {data['viewer_phone']}"""
 
     # Instantiate the Booking Notification class
     book_notification = BookingNotification()

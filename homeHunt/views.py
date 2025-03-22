@@ -5,6 +5,7 @@ import json
 from decimal import Decimal
 from django.conf import settings
 from django.contrib import messages
+from django.http import HttpResponse
 from django.http import JsonResponse
 from .dynamo_helper import DynamoHelper
 from .lambda_helper import LambdaHelper
@@ -13,6 +14,9 @@ from .s3bucket_helper import S3BucketHelper
 from botocore.exceptions import ClientError
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_protect
+from home_hunt_error_pkg.validators import Validator
+from home_hunt_error_pkg.exceptions import ValidationError
+from home_hunt_error_pkg.aws_errors import AWSErrorHandler
 
 @csrf_protect
 def signingup( request ):
@@ -29,47 +33,23 @@ def signingup( request ):
         context.update( { 'username': username, 'email': email, 'phone': phone } )
 
         try:
-            # Basic Form validation
-            errors = {}
-            if not all( [ username, email, phone, password1, password2 ] ):
-                errors['general'] = 'All fields are required'
-            
-            # Confirm Password validation
-            if password1 != password2:
-                errors['password2'] = 'Password and Confirm Password does not match'
-                
-            # Phone number validation
-            if not re.match( r'^\+353\d{9}$', phone ):
-                errors['phone'] = 'Phone must be in Irish format ( +353 followed by 9 digits, e.g. +353851234567 )'
-
-            if errors:
-                context['errors'] = errors
-                return render( request, 'signup.html', context )
+            Validator.validate_required_fields(request.POST, ['username', 'email', 'phone', 'password1', 'password2'])
+            Validator.validate_email(email)
+            Validator.validate_phone_number(phone)
+            Validator.validate_passwords(password1, password2)
 
             # Cognito user signup/registration
             cognito = SimpleCognito()
             response = cognito.sign_up( username, password1, email, phone )
             return redirect( 'confirm', username = username )
-
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
-            
-            # Mapping Cognito error codes to form fields
-            error_mapping = {
-                'UsernameExistsException': ( 'username', 'Username already exists' ),
-                'InvalidPasswordException': ( 'password1', 'Password should be 8 characters long, contains at least 1 number,' 
-                                                +'1 special character, 1 uppercase character and 1 lowercase character ( Ex. abc@123 )' ),
-                'InvalidParameterException': ( 'email', 'Invalid email address' ),
-                'CodeDeliveryFailureException': ( 'email', 'Failed to send verification code' ),
-                'InvalidPhoneNumberException': ( 'phone', 'Invalid phone number format' ),
-            }
-            
-            field, message = error_mapping.get( error_code, ( 'general', error_message ) )
-            context['errors'][field] = message
-            
+        except ValidationError as ve:
+            context['errors']['general'] = ve.message
+        except ClientError as ce:
+            ve = AWSErrorHandler.handle_cognito_errors(ce)
+            context['errors']['general'] = ve.message
         except Exception as e:
-            context['errors']['general'] = str( e )
+            context['errors']['general'] = str(e)
+            
         return render( request, 'signup.html', context )
 
     return render( request, 'signup.html', context )
@@ -84,20 +64,22 @@ def confirm_signup( request, username ):
         context['username'] = username
 
         try:
+            # Validate input
+            Validator.validate_required_fields(
+                {'username': username, 'code': code}, 
+                ['username', 'code']
+            )
+            
             cognito = SimpleCognito()
             response = cognito.confirm_sign_up( username, code )
             return redirect( 'login' )
-            
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
-            error_mapping = {
-                'CodeMismatchException': 'Invalid verification code',
-                'ExpiredCodeException': 'Code has expired. Please request a new one.',
-                'UserNotFoundException': 'User does not exist',
-            }
-            message = error_mapping.get( error_code, ( 'general', error_message ) )
-            context['errors']['general'] = message
+
+        except ValidationError as ve:
+            context['errors']['general'] = ve.message
+
+        except ClientError as ce:
+            aws_errors = AWSErrorHandler.handle_cognito_errors(ce)
+            context['errors']['general'] = aws_errors.message
             
         except Exception as e:
             context['errors']['general'] = str( e )
@@ -112,6 +94,9 @@ def login_view( request ):
         password = request.POST.get( 'password', '' ).strip()
 
         try:
+            # Validate input fields
+            Validator.validate_required_fields({'username': username, 'password': password}, ['username', 'password'])
+
             cognito = SimpleCognito()
             response = cognito.login(username, password)
             # Store tokens in session
@@ -119,18 +104,12 @@ def login_view( request ):
             request.session['refresh_token'] = response['AuthenticationResult']['RefreshToken']
             return redirect( 'home', username=username )
             
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            error_message = e.response['Error']['Message']
-            error_mapping = {
-                'NotAuthorizedException': 'Invalid username or password',
-                'UserNotFoundException': 'User does not exist',
-                'InvalidPasswordException': 'Password should be 8 characters long, Contains at least 1 number,' 
-                                                +'Contains at least 1 special character, Contains at least 1 uppercase letter,' 
-                                                +'Contains at least 1 lowercase letter',
-            }
-            message = error_mapping.get( error_code, ( 'general', error_message ) )
-            context['errors']['general'] = message
+        except ValidationError as ve:
+            context['errors']['general'] = ve.message
+
+        except ClientError as ce:
+            ve = AWSErrorHandler.handle_cognito_errors(ce)
+            context['errors']['general'] = ve.message
         
         except Exception as e:
             context['errors']['general'] = str(e)
@@ -237,8 +216,11 @@ def listings(request, username, listing_type):
         properties = dynamo_helper.get_rent_listed_properties()
     elif listing_type == 'sell':
         properties = dynamo_helper.get_sell_listed_properties()
-    else:
+    elif listing_type == 'mylistings':
         properties = dynamo_helper.get_my_listings(username)
+    else:
+        listing_type = 'mybookings'
+        properties = dynamo_helper.get_booked_property_details(username)
         
     if properties:    
         context['properties'] = properties
@@ -294,6 +276,7 @@ def book_viewing(request, username, property_id):
                     'viewer_name': request.POST.get('viewer_name'),
                     'viewer_email': request.POST.get('viewer_email'),
                     'viewer_phone': request.POST.get('viewer_phone'),
+                    'booking_owner_name': username,
             }
 
             # Prepare and send notifications
@@ -301,7 +284,7 @@ def book_viewing(request, username, property_id):
                 lambda_helper = LambdaHelper()
                 lambda_payload = {
                     'property_id': property_id,
-                    'property_address': f"{property_details['address']} {property_details['county']} {property_details['postal_code']}",
+                    'property_address': f"{property_details['address']}, {property_details['county']}, {property_details['postal_code']}",
                     'owner_name': property_details['owner_name'],
                     'owner_email': property_details['owner_email'],
                     'owner_phone': property_details['owner_phone'],
@@ -313,7 +296,7 @@ def book_viewing(request, username, property_id):
                 }
 
                 response = lambda_helper.invoke_notification( lambda_payload )
-                response = json.loads( response )
+                
                 if response['statusCode'] == 200:
                     messages.success(request, "Booking request submitted! Check your email for subscription confirmation.")
                     if dynamo_helper.save_booking_details( booking_details ):
@@ -366,7 +349,7 @@ def edit_property_details(request, username, property_id):
             if dynamo_helper.update_property( property_id, property_data ):
                 messages.success(request, "Property details updated successfully!! 🎉🎉")
                 properties = dynamo_helper.get_property_details( property_id )
-                return redirect('edit_property_details', username=username, property_id=property_id)  # Redirect to same page
+                return redirect('edit_property_details', username=username, property_id=property_id)
             else:
                 raise Exception("Failed to save property to database")
                 

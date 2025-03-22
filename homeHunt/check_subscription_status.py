@@ -14,18 +14,18 @@ def lambda_handler(event, context):
         viewer_email    = message_body['viewer_email']
         booking_details = message_body['booking_details']
 
-        sns_message = f"""Your Booking is Confirmed!\n\n
-                    Property Address: {booking_details['property_address']}\n
-                    Date: {booking_details['booking_date']}\n
-                    Time Slot: {booking_details['time_slot']}\n\n
-                    Owner Details:\n
-                        - Name: {booking_details['owner_name']}\n
-                        - Email: {booking_details['owner_email']}\n
-                        - Phone: {booking_details['owner_phone']}\n
-                    f"Viewer Details:\n
-                        - Name: {booking_details['viewer_name']}\n
-                        - Email: {booking_details['viewer_email']}\n
-                        - Phone: {booking_details['viewer_phone']}\n"""
+        sns_message = f"""Your Booking is Confirmed!
+        Property Address: {booking_details['property_address']}
+        Date: {booking_details['booking_date']}
+        Time Slot: {booking_details['time_slot']}
+        Owner Details:
+            - Name: {booking_details['owner_name']}
+            - Email: {booking_details['owner_email']}
+            - Phone: {booking_details['owner_phone']}
+        Viewer Details:
+            - Name: {booking_details['viewer_name']}
+            - Email: {booking_details['viewer_email']}
+            - Phone: {booking_details['viewer_phone']}"""
 
     
         # Check subscriptions for owner and viewer

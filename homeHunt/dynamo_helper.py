@@ -16,7 +16,6 @@ class DynamoHelper:
             'properties': self.dynamodb.Table( settings.DYNAMO_TABLE_NAME_1 ),
             'bookings': self.dynamodb.Table( settings.DYNAMO_TABLE_NAME_2 )
         }
-        
 
     def get_initial_properties(self, limit=100):
         try:
@@ -30,16 +29,13 @@ class DynamoHelper:
 
     def save_property(self, property_data):
         try:
-            # First attempt to save the property
             response = self.tables['properties'].put_item( Item = property_data )
             if response['ResponseMetadata']['HTTPStatusCode'] != 200:
                 raise Exception(f"DynamoDB error: { response['ResponseMetadata'] }")
             return True
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
-                # Table doesn't exist - create it
                 self._create_table()
-                # Retry the operation after table creation
                 return self.save_property(property_data)
             raise Exception(f"DynamoDB Error: {str(e)}")
         except Exception as e:
@@ -94,6 +90,8 @@ class DynamoHelper:
                 return self.get_eir_code(postal_code)
             elif e.response['Error']['Code'] == 'ResourceNotFoundException':
                 return False
+            elif e.response['Error']['Code'] == 'ValidationException':
+                return False
             else:
                 raise Exception(f"Postal Code Error: {str(e)}")
         except Exception as e:
@@ -109,10 +107,11 @@ class DynamoHelper:
             return properties
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'ExpiredTokenException':
-                # Refresh credentials and retry
                 self._refresh_dynamodb()
                 return self.get_rent_listed_properties()
             elif e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return []
+            elif e.response['Error']['Code'] == 'ValidationException':
                 return []
             else:
                 raise Exception(f"Code Error: {str(e)}")
@@ -134,6 +133,8 @@ class DynamoHelper:
                 return self.get_sell_listed_properties()
             elif e.response['Error']['Code'] == 'ResourceNotFoundException':
                 return []
+            elif e.response['Error']['Code'] == 'ValidationException':
+                return []
             else:
                 raise Exception(f"Code Error: {str(e)}")
             return []
@@ -153,7 +154,44 @@ class DynamoHelper:
                 self._refresh_dynamodb()
                 return self.get_my_listings( username )
             elif e.response['Error']['Code'] == 'ResourceNotFoundException':
-                return False
+                return []
+            elif e.response['Error']['Code'] == 'ValidationException':
+                return []
+            else:
+                raise Exception(f"Code Error: {str(e)}")
+            return []
+        except Exception as e:
+            raise Exception(f"Data not available: {str(e)}")
+        return []
+
+    def get_booked_property_details(self, username):
+        my_properties = self.get_my_listings( username )
+        my_property_ids = [property['id'] for property in my_properties]
+        
+        my_booked_properties = self.booked_properties( my_property_ids )
+        properties_booked_by_me = self.properties_booked_by_me( username )
+
+        unique_property_ids = [prop['property_id'] for prop in my_booked_properties + properties_booked_by_me if 'property_id' in prop]
+        property_details    = self.get_property_details_for_my_booking( unique_property_ids )
+        
+        return property_details
+        
+    def get_property_details_for_my_booking(self, property_ids ):
+        try:
+            filter_expression = Attr('id').is_in( property_ids )
+            response = self.tables['properties'].scan(
+                FilterExpression = filter_expression
+            )
+            properties = response.get('Items', [])
+            return properties
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'ExpiredTokenException':
+                self._refresh_dynamodb()
+                return self.get_rent_listed_properties()
+            elif e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return []
+            elif e.response['Error']['Code'] == 'ValidationException':
+                return []
             else:
                 raise Exception(f"Code Error: {str(e)}")
             return []
@@ -161,6 +199,54 @@ class DynamoHelper:
             raise Exception(f"Data not available: {str(e)}")
         return []
         
+        
+    def properties_booked_by_me(self, username):
+        try:
+            response = self.tables['bookings'].scan(
+                FilterExpression = Attr('booking_owner_name').eq(username)
+            )
+            properties = response.get('Items', [])
+            return properties
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'ExpiredTokenException':
+                self._refresh_dynamodb()
+                return self.properties_booked_by_me( username )
+            elif e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return []
+            elif e.response['Error']['Code'] == 'ValidationException':
+                return []
+            else:
+                raise Exception(f"Code Error: {str(e)}")
+            return []
+        except Exception as e:
+            raise Exception(f"Data not available: {str(e)}")
+        return []
+        
+    def booked_properties( self, property_ids ):
+        try:
+            if property_ids:
+                print('True')
+            filter_expression = Attr('property_id').is_in( property_ids )
+            response = self.tables['bookings'].scan(
+                FilterExpression = filter_expression
+            )
+            properties = response.get('Items', [])
+            return properties
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'ExpiredTokenException':
+                self._refresh_dynamodb()
+                return self.booked_properties( property_ids )
+            elif e.response['Error']['Code'] == 'ResourceNotFoundException':
+                return []
+            elif e.response['Error']['Code'] == 'ValidationException':
+                return []
+            else:
+                raise Exception(f"Code Error: {str(e)}")
+            return []
+        except Exception as e:
+            raise Exception(f"Data not available: {str(e)}")
+        return []
+    
     def get_property_details(self, property_id):
         try:
             response = self.tables['properties'].scan(
