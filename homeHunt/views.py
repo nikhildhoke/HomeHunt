@@ -105,11 +105,11 @@ def login_view( request ):
             return redirect( 'home', username=username )
             
         except ValidationError as ve:
-            context['errors']['general'] = ve.message
+            context['errors']['general'] = ve.message+'Hello'
 
         except ClientError as ce:
             ve = AWSErrorHandler.handle_cognito_errors(ce)
-            context['errors']['general'] = ve.message
+            context['errors']['general'] = ve.message+'Hello2'
         
         except Exception as e:
             context['errors']['general'] = str(e)

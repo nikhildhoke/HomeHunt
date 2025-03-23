@@ -9,7 +9,7 @@ CLIENT_NAME = "CognitoClient"
 
 class SimpleCognito:
     def __init__(self):
-        self.client                         = boto3.client("cognito-idp", region_name = settings.AWS_REGION )
+        self.client                         = boto3.client("cognito-idp",region_name=settings.AWS_REGION)
         self.user_pool_id                   = self.get_or_create_user_pool()
         self.client_id, self.client_secret  = self.get_or_create_user_pool_client()
 
