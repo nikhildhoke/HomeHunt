@@ -105,11 +105,11 @@ def login_view( request ):
             return redirect( 'home', username=username )
             
         except ValidationError as ve:
-            context['errors']['general'] = ve.message+'Hello'
+            context['errors']['general'] = ve.message
 
         except ClientError as ce:
             ve = AWSErrorHandler.handle_cognito_errors(ce)
-            context['errors']['general'] = ve.message+'Hello2'
+            context['errors']['general'] = ve.message
         
         except Exception as e:
             context['errors']['general'] = str(e)
@@ -378,4 +378,19 @@ def profile_view(request):
     username = request.GET.get('user', 'Guest')
     return render(request, 'profile.html', {'username': username})
     
+def logout_user(request, username):
+    try:
+        cognito = SimpleCognito()
+        response = cognito.logout(request.session['access_token'], request.session['refresh_token'], username)
+        if response:
+            return redirect( 'login' )
+    except Exception as e:
+        dynamo = DynamoHelper()
+        properties = dynamo.get_initial_properties(limit=100)
+        context = {
+            'username': username,
+            'properties': properties,
+            'error': {str(e)}
+        }
+        return render(request, 'home.html', context )
     

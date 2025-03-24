@@ -118,3 +118,40 @@ class SimpleCognito:
             Username            = username,
             ConfirmationCode    = code
         )
+        
+    def refresh_token(self, refresh_token, username):
+        try:
+            response = self.client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='REFRESH_TOKEN_AUTH',
+                AuthParameters={
+                    'REFRESH_TOKEN': refresh_token,
+                    'SECRET_HASH': self._secret_hash(username)
+                }
+            )
+            return response['AuthenticationResult']
+        except ClientError as e:
+            print(f"Failed to refresh token: {str(e)}")
+            raise
+
+    def logout(self, access_token, refresh_token, username):
+        try:
+            self.client.global_sign_out(AccessToken=access_token)
+            print("User logged out globally using access token.")
+            return True
+        except ClientError as e:
+            if 'expired' in str(e).lower():
+                print("Access token expired, attempting to refresh.")
+                try:
+                    auth_result = self.refresh_token(refresh_token, username)
+                    new_access_token = auth_result['AccessToken']
+                    self.client.global_sign_out(AccessToken=new_access_token)
+                    print("User logged out globally using refreshed access token.")
+                    return True
+                except ClientError as e:
+                    print(f"Failed to log out after token refresh: {str(e)}")
+                    raise
+                return False
+            else:
+                print(f"Failed to log out with initial access token: {str(e)}")
+                raise

@@ -52,6 +52,7 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+    cursor: pointer;
 }
 
 .profile-icon {
@@ -186,5 +187,19 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 2rem;
     padding: 1rem;
+}
+
+.error-message {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border-radius: 6px;
+    border: 1px solid #fca5a5;
+    font-size: 0.9rem;
+}
+
+#temp-message {
+    transition: opacity 0.5s ease-in-out;
 }
 
