@@ -68,8 +68,10 @@
             <h2 style="text-align:center;">Properties Available for Rent</h2>
         {% elif listing_type == "sell" %}
             <h2 style="text-align:center;">Properties Available for Sale</h2>
-        {% else %}
+        {% elif listing_type == "mylistings" %}
             <h2 style="text-align:center;">My Listed Properties</h2>
+        {% else %}
+            <h2 style="text-align:center;">My Bookings</h2>
         {% endif %}
         
         {% if error %}
@@ -101,7 +103,7 @@
                         {% if listing_type == 'mylistings' %}
                             <a href="{% url 'edit_property_details' username=username property_id=property.id %}" class="property-card">
                         {% elif listing_type == 'mybookings' %}
-                            <a href="{% url 'property-details' action_type='booking' username=username property_id=property.id %}" class="property-card">
+                            <a href="#" class="property-card">
                         {% else %}
                             <a href="{% url 'property-details' action_type='view' username=username property_id=property.id %}" class="property-card">
                         {% endif %}
