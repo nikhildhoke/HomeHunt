@@ -33,7 +33,7 @@ jobs:
     #     aws_access_key: ${{ secrets.aws_access_key }}
     #     aws_secret_key: ${{ secrets.aws_secret_key }}
     #     region: 'us-east-1'
-    #     application_name: 'your-application-name'
-    #     environment_name: 'your-environment-name'
+    #     application_name: 'HomeHunt'
+    #     environment_name: 'new-homehunt-env'
     #     version_label: ${{ github.sha }}
     #     deployment_package: path/to/your/deployment.zip
