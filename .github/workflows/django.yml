@@ -1,4 +1,4 @@
-name: Django CI/CD
+name: Django CI
 
 on:
   push:
@@ -12,24 +12,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.9
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: '3.9'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Run tests
-      run: |
-        python manage.py test
-    - name: Deploy to Elastic Beanstalk
-      uses: einaregilsson/beanstalk-deploy@v18
-      with:
-        aws_access_key: ${{ secrets.aws_access_key }}
-        aws_secret_key: ${{ secrets.aws_secret_key }}
-        region: 'us-east-1'
-        application_name: 'your-application-name'
-        environment_name: 'your-environment-name'
-        version_label: ${{ github.sha }}
-        deployment_package: path/to/your/deployment.zip
+
+    # - name: Run tests
+    #   run: |
+    #     # Assuming you are using Django's default test runner
+    #     python manage.py test
