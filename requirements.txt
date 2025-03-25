@@ -1,7 +1,7 @@
 asgiref==3.8.1
 blessed==1.20.0
-boto3==1.37.3
-botocore==1.37.3
+boto3
+botocore
 cement==2.10.14
 certifi==2025.1.31
 charset-normalizer==3.4.1
