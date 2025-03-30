@@ -71,8 +71,8 @@ jobs:
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v18
       with:
-        aws_access_key_id: ${{ secrets.aws_access_key_id }}
-        aws_secret_access_key: ${{ secrets.aws_secret_access_key }}
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
         region: 'us-east-1'
         application_name: 'HomeHunt'
         environment_name: 'new-homehunt-env'
