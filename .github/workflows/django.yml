@@ -44,7 +44,8 @@ jobs:
     #   run: |
     #     # Assuming you are using Django's default test runner
     #     python manage.py test
-
+  
+  deploy:
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v18
       with:
