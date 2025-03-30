@@ -14,7 +14,7 @@ class SimpleCognito:
         self.client_id, self.client_secret  = self.get_or_create_user_pool_client()
 
     def _secret_hash(self, username):
-        key     = self.client_secret.encode()
+        key = self.client_secret.encode()
         message = f"{username}{self.client_id}".encode()
         return base64.b64encode(hmac.new(key, message, hashlib.sha256).digest()).decode()
 
@@ -29,21 +29,14 @@ class SimpleCognito:
                                 {'Name': 'phone_number', 'Value': phone}
             ]
     )
-    
-    def _secret_hash(self, username):
-        key = self.client_secret.encode()
-        message = f"{username}{self.client_id}".encode()
-        return base64.b64encode(hmac.new(key, message, hashlib.sha256).digest()).decode()
 
     def get_or_create_user_pool(self):
         try:
-            # List existing user pools
             response = self.client.list_user_pools(MaxResults=60)
             for pool in response.get("UserPools", []):
                 if pool["Name"] == settings.AWS_USER_POOL_NAME:
                     return pool["Id"]
 
-            # If no matching user pool found, create a new one
             print("Creating new Cognito User Pool...")
             response = self.client.create_user_pool(
                 PoolName    = settings.AWS_USER_POOL_NAME,
