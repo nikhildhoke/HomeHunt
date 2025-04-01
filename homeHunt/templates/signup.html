@@ -17,14 +17,6 @@
         {{ errors.general }}
     </div>
     {% endif %}
-    
-    {% if errors %}
-        {% for error, msg in errors.items %}
-            <div class="alert alert-danger">
-                {{ msg }}
-            </div>
-        {% endfor %}
-    {% endif %}
 
     <form method="POST">
         {% csrf_token %}
